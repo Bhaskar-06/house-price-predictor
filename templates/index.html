@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropValue AI | House Price Predictor</title>
+<meta name="description" content="Machine-learning powered house price prediction.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #f5b942;
+    --accent-2: #ff7a59;
+    --glass: rgba(255,255,255,0.10);
+    --glass-border: rgba(255,255,255,0.22);
+    --text: #f4f6fb;
+    --muted: #b9c2d6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text);
+    background: #0b1020;
+    line-height: 1.6;
+  }
+
+  /* ---------- NAV ---------- */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 6%;
+    background: rgba(11,16,32,0.55); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .logo { font-weight: 800; font-size: 1.3rem; letter-spacing: .3px; }
+  .logo span { color: var(--accent); }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 28px; font-weight: 500; font-size: .95rem; transition: color .2s; }
+  nav a:hover { color: var(--accent); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 110px 6% 60px;
+    background:
+      linear-gradient(135deg, rgba(8,12,28,0.88), rgba(8,12,28,0.55)),
+      url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=80')
+      center/cover fixed no-repeat,
+      linear-gradient(135deg, #0b1020, #1d2b53);
+  }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px;
+    max-width: 1200px; width: 100%; align-items: center;
+  }
+  .badge {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    font-size: .8rem; color: var(--accent); font-weight: 600; margin-bottom: 18px;
+  }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 800; line-height: 1.1; margin-bottom: 18px; }
+  h1 em { font-style: normal; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lead { color: var(--muted); font-size: 1.08rem; max-width: 520px; margin-bottom: 28px; }
+  .stats { display: flex; gap: 32px; flex-wrap: wrap; }
+  .stat b { display: block; font-size: 1.7rem; color: #fff; }
+  .stat small { color: var(--muted); font-size: .82rem; }
+
+  /* ---------- CARD ---------- */
+  .card {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 22px; padding: 34px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 25px 60px rgba(0,0,0,.45);
+  }
+  .card h2 { font-size: 1.4rem; margin-bottom: 4px; }
+  .card .sub { color: var(--muted); font-size: .9rem; margin-bottom: 22px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  input, select {
+    width: 100%; padding: 13px 14px; border-radius: 12px;
+    border: 1px solid var(--glass-border); background: rgba(10,15,35,0.55);
+    color: #fff; font-size: 1rem; font-family: inherit; outline: none;
+    transition: border .2s, box-shadow .2s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245,185,66,.18); }
+  select option { background: #10172f; }
+  button {
+    width: 100%; padding: 15px; margin-top: 6px; border: 0; border-radius: 12px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer; color: #1a1304;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: transform .15s, box-shadow .2s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255,122,89,.35); }
+  button:disabled { opacity: .7; cursor: wait; transform: none; }
+
+  .result { display: none; margin-top: 22px; padding: 20px; border-radius: 16px;
+    background: rgba(245,185,66,0.12); border: 1px solid rgba(245,185,66,.45);
+    animation: pop .45s ease; }
+  .result.show { display: block; }
+  .result .label { color: var(--muted); font-size: .85rem; }
+  .result .price { font-size: 2.3rem; font-weight: 800; color: var(--accent); }
+  .result .range, .result .ppsf { color: var(--muted); font-size: .9rem; }
+  .error { display: none; margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+    background: rgba(255,80,80,.15); border: 1px solid rgba(255,80,80,.5); color: #ffb3b3; font-size: .9rem; }
+  .error.show { display: block; }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+
+  /* ---------- SECTIONS ---------- */
+  section { padding: 90px 6%; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .alt { background: #0e1530; }
+  h3.title { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 10px; }
+  .title-sub { text-align: center; color: var(--muted); max-width: 640px; margin: 0 auto 46px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
+  .tile { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; padding: 26px; transition: transform .2s, border .2s; }
+  .tile:hover { transform: translateY(-5px); border-color: var(--accent); }
+  .tile .ic { font-size: 1.8rem; margin-bottom: 10px; }
+  .tile h4 { margin-bottom: 6px; }
+  .tile p { color: var(--muted); font-size: .92rem; }
+  .metric b { display: block; font-size: 2.1rem; color: var(--accent); }
+  .metric span { color: var(--muted); font-size: .9rem; }
+  footer { text-align: center; padding: 30px; color: var(--muted); font-size: .85rem; background: #080c1c; }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+    nav a { margin-left: 16px; }
+    .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Prop<span>Value</span> AI</div>
+  <div>
+    <a href="#predict">Predict</a>
+    <a href="#performance">Performance</a>
+    <a href="#how">How it works</a>
+  </div>
+</nav>
+
+<header class="hero" id="predict">
+  <div class="hero-grid">
+    <div>
+      <span class="badge">⚡ Powered by Machine Learning</span>
+      <h1>Know your property's <em>true value</em> in seconds.</h1>
+      <p class="lead">An AI model trained on thousands of real listings estimates fair market prices using location, area, bedrooms and bathrooms.</p>
+      <div class="stats">
+        <div class="stat"><b>{{ metrics.samples }}+</b><small>Listings analysed</small></div>
+        <div class="stat"><b>{{ (metrics.r2 * 100) | round(1) }}%</b><small>Model R² score</small></div>
+        <div class="stat"><b>{{ locations|length }}</b><small>Locations covered</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Get a price estimate</h2>
+      <p class="sub">Fill in the property details below.</p>
+
+      <div class="field">
+        <label for="location">Location</label>
+        <input list="locList" id="location" placeholder="Start typing a locality..." autocomplete="off">
+        <datalist id="locList">
+          {% for l in locations %}<option value="{{ l }}">{% endfor %}
+        </datalist>
+      </div>
+
+      <div class="field">
+        <label for="area_type">Area type</label>
+        <select id="area_type">
+          {% for a in area_types %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="row">
+        <div class="field"><label for="sqft">Total area (sq ft)</label>
+          <input type="number" id="sqft" placeholder="e.g. 1200" min="300" max="10000"></div>
+        <div class="field"><label for="bhk">Bedrooms (BHK)</label>
+          <input type="number" id="bhk" value="2" min="1" max="10"></div>
+      </div>
+      <div class="field"><label for="bath">Bathrooms</label>
+        <input type="number" id="bath" value="2" min="1" max="12"></div>
+
+      <button id="btn" onclick="predict()">Predict Price</button>
+      <div class="error" id="err"></div>
+
+      <div class="result" id="result">
+        <div class="label">Estimated market value</div>
+        <div class="price" id="price">-</div>
+        <div class="range" id="range"></div>
+        <div class="ppsf" id="ppsf"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="alt" id="performance">
+  <div class="container">
+    <h3 class="title">Model performance</h3>
+    <p class="title-sub">Metrics measured on a held-out test set the model never saw during training.</p>
+    <div class="grid3">
+      <div class="tile metric"><b>{{ metrics.r2 }}</b><span>R² score (variance explained)</span></div>
+      <div class="tile metric"><b>₹{{ metrics.mae }} L</b><span>Mean absolute error</span></div>
+      <div class="tile metric"><b>{{ (metrics.mdape * 100) | round(1) }}%</b><span>Median percentage error</span></div>
+      <div class="tile metric"><b>{{ metrics.samples }}</b><span>Cleaned training samples</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="container">
+    <h3 class="title">How it works</h3>
+    <p class="title-sub">A complete predictive-analytics pipeline from raw data to live prediction.</p>
+    <div class="grid3">
+      <div class="tile"><div class="ic">🧹</div><h4>1. Data cleaning</h4><p>Missing values, mixed units and outliers are removed so the model learns real market patterns.</p></div>
+      <div class="tile"><div class="ic">🛠️</div><h4>2. Feature engineering</h4><p>Text such as "3 BHK" is converted to numbers and rare localities are grouped together.</p></div>
+      <div class="tile"><div class="ic">🤖</div><h4>3. Gradient boosting</h4><p>Tuned with cross-validation and trained on log-prices for stable, accurate estimates.</p></div>
+      <div class="tile"><div class="ic">🚀</div><h4>4. Live deployment</h4><p>Served through a Flask API and deployed on the cloud for instant predictions.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built with Python, scikit-learn &amp; Flask · Estimates are indicative, not financial advice ·
+  <a href="https://github.com/YOUR_USERNAME/house-price-predictor" target="_blank" rel="noopener">View on GitHub</a>
+</footer>
+
+<script>
+function formatINR(lakhs) {
+  if (lakhs >= 100) return "₹" + (lakhs / 100).toFixed(2) + " Cr";
+  return "₹" + lakhs.toFixed(2) + " L";
+}
+
+async function predict() {
+  const btn = document.getElementById("btn");
+  const err = document.getElementById("err");
+  const res = document.getElementById("result");
+  err.classList.remove("show"); res.classList.remove("show");
+
+  const payload = {
+    location: document.getElementById("location").value,
+    area_type: document.getElementById("area_type").value,
+    total_sqft: document.getElementById("sqft").value,
+    bhk: document.getElementById("bhk").value,
+    bath: document.getElementById("bath").value,
+  };
+  if (!payload.location || !payload.total_sqft) {
+    err.textContent = "Please enter a location and the total area.";
+    err.classList.add("show"); return;
+  }
+
+  btn.disabled = true; btn.textContent = "Analysing...";
+  try {
+    const r = await fetch("/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Prediction failed.");
+
+    document.getElementById("price").textContent = formatINR(d.price);
+    document.getElementById("range").textContent =
+      "Likely range: " + formatINR(d.low) + " - " + formatINR(d.high);
+    document.getElementById("ppsf").textContent =
+      "≈ ₹" + d.per_sqft.toLocaleString("en-IN") + " per sq ft";
+    res.classList.add("show");
+  } catch (e) {
+    err.textContent = e.message; err.classList.add("show");
+  } finally {
+    btn.disabled = false; btn.textContent = "Predict Price";
+  }
+}
+</script>
+</body>
+</html>
